@@ -1,0 +1,38 @@
+name: CI
+
+on: [push]
+
+jobs:
+  rails:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    # https://docs.github.com/en/free-pro-team@latest/actions/guides/creating-postgresql-service-containers
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: "p4ssw0rd"
+          POSTGRES_DB: app
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v1
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          ruby-version: .ruby-version
+      # Useful if need to debug
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v3
+      - name: Install chrome Headless
+        run: |
+          sudo apt-get update
+          sudo apt-get install google-chrome-stable
+      - name: Run tests
+        env:
+          RAILS_ENV: test
+        run: |
+          ./bin/rails db:migrate
+          ./bin/rails test
+          ./bin/rails test:system
